@@ -13,13 +13,13 @@
 #include <TaskScheduler.h>
 //导入WiFi连接任务
 #include <wifiConnectTask/WiFiConnectWork.hpp>
-
+//导入时间校准任务
+#include <netClientTask/NtpTimeClientWork.hpp>
 //创建一个连接WiFi任务
 void connectWiFiTask();
 //创建一个初始化全局变量的任务
 void initAll();
 //创建一个时间校准任务
+void timeClientInit();
+//创建一个时间更新任务
 void timeUpdate();
-
-//创建一个让所有任务循环执行的任务
-void onWorkLoop();
