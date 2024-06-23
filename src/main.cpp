@@ -8,7 +8,7 @@ Task tConnect(&connectWiFiTask , &sc);
 // 创建一个时间校准任务
 Task tInitTimeClient(TASK_IMMEDIATE , TASK_ONCE , &timeClientInit , &sc);
 // 创建一个时间更新任务
-Task tUpdateTime(TASK_SECOND , TASK_FOREVER , &timeUpdate , &sc);
+Task tUpdateTime(&timeUpdate , &sc);
 WiFiConnectWork* wiFiConnectWork = NULL;
 TimeClientWork* timeClientWork = NULL;
 // 初始化函数
@@ -24,11 +24,16 @@ void setup() {
     tConnect.waitFor(
         tInitAllVariable.getInternalStatusRequest() ,
         5 * TASK_SECOND ,
-        TASK_FOREVER);
+        TASK_FOREVER
+        );
     // 时间初始化任务需要等待WiFi连接任务完成后再开始
     tInitTimeClient.waitFor(tConnect.getInternalStatusRequest());
     //时间更新任务需要等待时间初始化任务完成后再开始
-    tUpdateTime.waitFor(tInitTimeClient.getInternalStatusRequest());
+    tUpdateTime.waitFor(
+        tInitTimeClient.getInternalStatusRequest() ,
+        TASK_SECOND ,
+        TASK_FOREVER
+        );
 }
 // 时间更新任务
 void timeUpdate() {
@@ -41,10 +46,10 @@ void timeClientInit() {
     timeClientWork->initWork(
         {
             .init = [] (std::string name) {
-                logger.Println(name,"开始执行时间更新任务");
+                logger.Println(name,"开始执行时间校准任务");
             },
             .finished = [] (std::string name) {
-                logger.Println(name,"时间更新任务完成");
+                logger.Println(name,"时间校准任务完成");
             }
         }
     );

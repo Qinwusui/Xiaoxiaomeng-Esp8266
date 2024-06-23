@@ -12,7 +12,8 @@ private:
     NTPClient* client = NULL;
 public:
     TimeClientWork() {
-        this->client = new NTPClient(this->wifiUdp , "ntp.aliyun.com");
+        //初始化NTP客户端
+        this->client = new NTPClient(this->wifiUdp , "ntp.aliyun.com" , 8 * 60 * 60 * 100);
     }
     inline string getWorkName() {
         return "TimeClientWork";
