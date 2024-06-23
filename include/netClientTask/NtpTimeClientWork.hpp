@@ -17,9 +17,7 @@ public:
     inline string getWorkName() {
         return "TimeClientWork";
     }
-    inline void initWork(
-        WorkStatus status
-    ) {
+    inline void initWork(WorkStatus status) {
         status.init(getWorkName());
         this->client->begin();
         status.finished(getWorkName());
