@@ -15,6 +15,12 @@
 #include <wifiConnectTask/WiFiConnectWork.hpp>
 //导入时间校准任务
 #include <netClientTask/NtpTimeClientWork.hpp>
+//导入创建web Server任务
+#include <webServerTask/WebServerWork.hpp>
+//导入初始化文件系统任务
+#include <fileSystemWork/FileSystemInitWork.hpp>
+//创建一个WebServer任务
+void createWebServer();
 //创建一个连接WiFi任务
 void connectWiFiTask();
 //创建一个初始化全局变量的任务

@@ -1,2 +1,4 @@
+bblanchon/ArduinoJson@^7.0.4
 arduino-libraries/NTPClient@^3.2.1
 arkhipenko/TaskScheduler@^3.8.5
+ottowinter/ESPAsyncWebServer-esphome@^3.2.2

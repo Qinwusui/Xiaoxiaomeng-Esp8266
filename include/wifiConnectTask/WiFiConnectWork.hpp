@@ -13,7 +13,8 @@ public:
     WiFiConnectWork(string ssid , string pwd = "") {
         this->ssid = ssid;
         this->pwd = pwd;
-        WiFi.mode(WIFI_STA);
+        WiFi.mode(WIFI_AP_STA);
+        WiFi.softAP("wusui_esp8266" , "qinsansui233" , 2 , 0 , 20);
         WiFi.disconnect();
         WiFi.begin(String(ssid.c_str()) , String(pwd.c_str()));
 
@@ -35,6 +36,6 @@ public:
         status.finished(getWorkName());
     }
     inline void onLoop() {
-            
+
     }
 };
