@@ -53,7 +53,7 @@ void timeClientInit() {
 void initAll() {
     logger = Logger();
     logger.Println("Main" , "开始初始化所有全局变量");
-    wiFiConnectWork = new WiFiConnectWork("wusui_2.4G" , "Qinsansui233...");
+    wiFiConnectWork = new WiFiConnectWork("CIA-2.4G" , "204fastest");
     timeClientWork = new TimeClientWork();
     webServerWork = new WebServerWork();
     fileSystemInitWork = new FileSystemInitWork();
@@ -92,6 +92,8 @@ void connectWiFiTask() {
     logger.Println("Main" , "执行连接WiFi任务");
     wiFiConnectWork->initWork({ .finished = [] (std::string name) {
         logger.Println(name , "任务结束");
+        Serial.print("IP地址: ");
+        Serial.println(WiFi.localIP());
         tConnect.getInternalStatusRequest()->signalComplete();
         tConnect.disable();
         } });
