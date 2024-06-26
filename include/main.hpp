@@ -19,6 +19,14 @@
 #include <webServerTask/WebServerWork.hpp>
 //导入初始化文件系统任务
 #include <fileSystemWork/FileSystemInitWork.hpp>
+
+//导入SSD1306显示库
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <oledTask/oledCharacters.hpp>
+
+
 //创建一个WebServer任务
 void createWebServer();
 //创建一个连接WiFi任务
@@ -29,3 +37,6 @@ void initAll();
 void timeClientInit();
 //创建一个时间更新任务
 void timeUpdate();
+
+//创建一个初始化屏幕任务
+void initScreen();
