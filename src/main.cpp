@@ -90,11 +90,15 @@ void createWebServer() {
 // 连接WiFi任务
 void connectWiFiTask() {
     logger.Println("Main" , "执行连接WiFi任务");
-    wiFiConnectWork->initWork({ .finished = [] (std::string name) {
-        logger.Println(name , "任务结束");
-        tConnect.getInternalStatusRequest()->signalComplete();
-        tConnect.disable();
-        } });
+    wiFiConnectWork->initWork(
+        {
+            .finished = [] (std::string name) {
+                logger.Println(name , "任务结束");
+                tConnect.getInternalStatusRequest()->signalComplete();
+                tConnect.disable();
+            }
+        }
+    );
 }
 
 // 循环函数

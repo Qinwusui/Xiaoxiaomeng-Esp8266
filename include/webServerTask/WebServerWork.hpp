@@ -49,7 +49,9 @@ public:
          */
         server->on("/wifi/scan" , HTTP_GET , [] (AsyncWebServerRequest* request) {
             //比较复杂的类型，可以使用auto代替
-            auto   scanFunc = bind(scanCompleteFunc , request , placeholders::_1);
+            // auto   
+            std::function<void(int)>
+                scanFunc = bind(scanCompleteFunc , request , placeholders::_1);
             WiFi.scanNetworksAsync(scanFunc);
             }
         );
@@ -58,16 +60,14 @@ public:
     }
     //静态方法，使其能够被std::bind抹去类型
     static void scanCompleteFunc(AsyncWebServerRequest* request , int count) {
-        DynamicJsonDocument json(600);
+        JsonDocument json = JsonDocument();
         for (int i = 0; i < count; i++) {
-            const char* ssid = WiFi.SSID(i).c_str();
+            String ssid = WiFi.SSID(i);
             json ["list"]["ssid"] = ssid;
         }
-        string* jsonStr = new string();
-        serializeJsonPretty(json , *jsonStr);
-        request->send(200 , "application/json" , String(*jsonStr->c_str()));
-        //回收对象
-        delete jsonStr;
+        String jsonStr = String();
+        serializeJsonPretty(json , jsonStr);
+        request->send(200 , "application/json" , jsonStr);
     }
     inline void onLoop() {
 
