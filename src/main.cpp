@@ -86,7 +86,7 @@ void timeClientInit() {
 void initAll() {
     logger = Logger();
     logger.Println("Main" , "开始初始化所有全局变量");
-    wiFiConnectWork = new WiFiConnectWork("wusui_2.4G" , "Qinsansui233...");
+    wiFiConnectWork = new WiFiConnectWork("CIA-2.4G" , "204fastest");
     timeClientWork = new TimeClientWork();
     webServerWork = new WebServerWork();
     fileSystemInitWork = new FileSystemInitWork();
