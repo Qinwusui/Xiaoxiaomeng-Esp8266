@@ -1,7 +1,11 @@
+#include <ESP8266WiFi.h>
+#include <ESPAsyncWebServer.h>
 #include <main.hpp>
 Logger logger;
 Scheduler sc;
 // 创建一个连接WiFi任务
+AsyncWebServer server(80);  // 在端口80上创建服务器
+const int relayPin = D0;    // 继电器连接的GPIO pin
 Task tConnect(TASK_SECOND , TASK_FOREVER , &connectWiFiTask , &sc);
 //创建一个WiFi监听任务
 Task tWiFiListener(&wifiStatusListener , &sc);
@@ -19,6 +23,33 @@ FileSystemInitWork* fileSystemInitWork = NULL;
 WiFiStatusListenerWork* wifiStatusListenerWork = NULL;
 //定义参考https://blog.csdn.net/dpjcn1990/article/details/92831760
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C  u8g2(U8G2_R0 , U8X8_PIN_NONE , 14 , 13);
+// 网页内容
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html>
+<head>
+  <title>ESP Relay Control</title>
+    <style>
+    button {
+      width: 200px;
+      height: 50px; 
+      font-size: 20px; 
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <button onclick="toggleRelay()">press</button>
+  <script>
+    function toggleRelay() {
+      fetch('/toggle')
+        .then(response => response.text())
+        .then(state => console.log("Relay state: " + state))
+        .catch(console.error);
+    }
+  </script>
+</body>
+</html>
+)rawliteral";
 
 // 初始化函数
 void setup() {
@@ -106,23 +137,22 @@ void initAll() {
 }
 //创建webServer任务
 void createWebServer() {
-    webServerWork->initWork(
-        {
-            .init = [] (std::string name) {
-                logger.Println(name,"开始执行创建webServer任务");
-            },
-            .running = [] (std::string name) {
-                logger.Println(name,"调用");
-            },
-            .finished = [] (std::string name) {
-                logger.Println(name,"初始化WebServer完成");
-            },
-            .error = [] (std::string name,std::string reason) {
-                logger.Println(name,reason);
-            },
-        }
-    );
+    pinMode(relayPin , OUTPUT);  // 设置继电器pin为输出模式
+    digitalWrite(relayPin , LOW); // 默认关闭继电器
+
+    server.on("/" , HTTP_GET , [] (AsyncWebServerRequest* request) {
+        request->send_P(200 , "text/html" , index_html);
+        });
+
+    server.on("/toggle" , HTTP_GET , [] (AsyncWebServerRequest* request) {
+        digitalWrite(relayPin , !digitalRead(relayPin));  // 切换继电器状态
+        request->send(200 , "text/plain" , digitalRead(relayPin) ? "ON" : "OFF");
+        });
+
+    server.begin();  // 启动服务器
+    logger.Println("WebServer" , "服务器已启动");
 }
+
 // 连接WiFi任务
 void connectWiFiTask() {
     logger.Println("Main" , "执行连接WiFi任务");
