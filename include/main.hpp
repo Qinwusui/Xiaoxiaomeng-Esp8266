@@ -14,18 +14,20 @@
 //导入WiFi连接任务
 #include <wifiConnectTask/WiFiConnectWork.hpp>
 //导入时间校准任务
-#include <netClientTask/NtpTimeClientWork.hpp>
+#include <ntp/NtpTimeClientWork.hpp>
 //导入创建web Server任务
 #include <webServerTask/WebServerWork.hpp>
 //导入初始化文件系统任务
 #include <fileSystemWork/FileSystemInitWork.hpp>
-
+//导入WiFi状态监听任务
+#include <wifiConnectTask/WiFiStatusListenerWork.hpp>
 //导入SSD1306显示库
-#include <Wire.h>
+// #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <oledTask/oledCharacters.hpp>
-
+// #include <oledTask/oledCharacters.hpp>
+#include <Wire.h>
+#include <U8g2lib.h>
 
 //创建一个WebServer任务
 void createWebServer();
@@ -40,3 +42,11 @@ void timeUpdate();
 
 //创建一个初始化屏幕任务
 void initScreen();
+//创建一个屏幕循环任务
+void screenLoop();
+
+//创建一个绘制屏幕的函数
+void showText(uint8_t x , uint8_t y , const char* text);
+//创建一个WiFi监听任务
+void wifiStatusListener();
+

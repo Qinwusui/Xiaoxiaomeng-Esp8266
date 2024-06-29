@@ -1,7 +1,7 @@
 #pragma once
 #include <functional>
 #include <work/WorkStatus.hpp>
-
+using namespace std;
 //定义一个工作接口
 class Work {
 
@@ -18,5 +18,6 @@ public:
     //定义一个初始化任务方法，该方法传入一个lambda函数
     virtual inline void initWork(WorkStatus status) = 0;
     //定义一个循环执行的任务方法，这个方法会一直循环执行
-    virtual inline void onLoop() = 0;
+    template<typename T>
+    inline T onLoop();
 };

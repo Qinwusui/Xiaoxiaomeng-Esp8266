@@ -1,25 +1,25 @@
 #include <main.hpp>
-//定义显示屏驱动
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET    -1
-Adafruit_SSD1306 display(SCREEN_WIDTH , SCREEN_HEIGHT , &Wire , -1);
-
 Logger logger;
 Scheduler sc;
 // 创建一个连接WiFi任务
-Task tConnect(&connectWiFiTask , &sc);
+Task tConnect(TASK_SECOND , TASK_FOREVER , &connectWiFiTask , &sc);
+//创建一个WiFi监听任务
+Task tWiFiListener(&wifiStatusListener , &sc);
 // 创建一个时间校准任务
 Task tInitTimeClient(TASK_IMMEDIATE , TASK_ONCE , &timeClientInit , &sc);
 // 创建一个时间更新任务
 Task tUpdateTime(TASK_SECOND , TASK_FOREVER , &timeUpdate , &sc);
 // 创建一个web Server任务
 Task tCreateWebServer(TASK_IMMEDIATE , TASK_ONCE , &createWebServer , &sc);
-Task tInitScreen(TASK_SECOND , TASK_ONCE , &initScreen , &sc);
+//初始化对象
 WiFiConnectWork* wiFiConnectWork = NULL;
 TimeClientWork* timeClientWork = NULL;
 WebServerWork* webServerWork = NULL;
 FileSystemInitWork* fileSystemInitWork = NULL;
+WiFiStatusListenerWork* wifiStatusListenerWork = NULL;
+//定义参考https://blog.csdn.net/dpjcn1990/article/details/92831760
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C  u8g2(U8G2_R0 , U8X8_PIN_NONE , 14 , 13);
+
 // 初始化函数
 void setup() {
     Serial.begin(9600);
@@ -37,28 +37,39 @@ void setup() {
     tUpdateTime.enable();
     //启动创建webserver任务
     tCreateWebServer.enable();
-    //启动屏幕初始化任务
-    tInitScreen.enable();
+    //启动WiFi监听任务
+    tWiFiListener.waitFor(tConnect.getInternalStatusRequest() , TASK_SECOND , TASK_FOREVER);
 }
+//WiFi监听任务
+void wifiStatusListener() {
+    if (wifiStatusListenerWork) {
+        WiFiStatus* status = wifiStatusListenerWork->onLoop<WiFiStatus*>();
+        String s = String(status->length);
+        logger.Println("wifiStatusListener" , status->ssid + " " + string(status->connected?"已连接":"已断开") + " " + s.c_str());
+    }
 
+}
+//显示文本到屏幕
+void showText(int x , int y , const char* text) {
+    u8g2.setCursor(x , y);
+    u8g2.print(text);
+    u8g2.sendBuffer();
+    delay(100);
+    u8g2.clearBuffer();
+}
 //屏幕初始化任务
 void initScreen() {
-    // 初始化显示屏
-    if (!display.begin(SSD1306_SWITCHCAPVCC , 0x3C)) {
-        Serial.println("SSD1306 allocation failed");
-        logger.Println("initScreen" , "初始化屏幕驱动失败");
-        return;
-    }
-    display.clearDisplay();
-    // 显示图像
-    display.drawBitmap(0 , 0 , genshin_logo , SCREEN_WIDTH , SCREEN_HEIGHT , WHITE);
-    display.display();
+    // // 初始化显示屏
+    u8g2.begin();
+    u8g2.enableUTF8Print();
+    u8g2.setFont(u8g2_font_wqy12_t_gb2312b);
 }
 
 // 时间更新任务
 void timeUpdate() {
     if (timeClientWork) {
-        timeClientWork->onLoop();
+        std::string  time = (std::string) timeClientWork->onLoop<string>();
+        showText(0 , 13 , time.c_str());
     }
 }
 // 时间初始化任务
@@ -77,10 +88,13 @@ void timeClientInit() {
 void initAll() {
     logger = Logger();
     logger.Println("Main" , "开始初始化所有全局变量");
-    wiFiConnectWork = new WiFiConnectWork("CIA-2.4G" , "204fastest");
+    wiFiConnectWork = new WiFiConnectWork("wusui_2.4G" , "Qinsansui233...");
     timeClientWork = new TimeClientWork();
     webServerWork = new WebServerWork();
     fileSystemInitWork = new FileSystemInitWork();
+    wifiStatusListenerWork = new WiFiStatusListenerWork();
+    initScreen();
+
     fileSystemInitWork->initWork(
         {
             .init = [] (std::string name) {
@@ -115,13 +129,16 @@ void createWebServer() {
 void connectWiFiTask() {
     logger.Println("Main" , "执行连接WiFi任务");
     wiFiConnectWork->initWork(
-        { .finished = [] (std::string name) {
-              logger.Println(name , "任务结束");
-              Serial.print("IP地址: ");
-              Serial.println(WiFi.localIP());
-              tConnect.getInternalStatusRequest()->signalComplete();
-              tConnect.disable();
-         }
+        {
+            .finished = [] (std::string name) {
+                logger.Println(name , "任务结束");
+                logger.Println(name,"IP:");
+                std::string ip = WiFi.localIP().toString().c_str();
+                logger.Println(name,ip);
+                showText(128 - u8g2.getUTF8Width(ip.c_str()) , 64,ip.c_str());
+                tConnect.getInternalStatusRequest()->signalComplete();
+                tConnect.disable();
+             }
         });
 }
 

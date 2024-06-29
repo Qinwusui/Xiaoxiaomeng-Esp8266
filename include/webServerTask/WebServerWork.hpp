@@ -69,8 +69,5 @@ public:
         serializeJsonPretty(json , jsonStr);
         request->send(200 , "application/json" , jsonStr);
     }
-    inline void onLoop() {
-
-    }
 };
 

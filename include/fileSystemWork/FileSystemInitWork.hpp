@@ -28,7 +28,4 @@ public:
         status.finished(getWorkName());
 
     }
-    inline void onLoop() {
-
-    }
 };
