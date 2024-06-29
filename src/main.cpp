@@ -54,8 +54,6 @@ void showText(int x , int y , const char* text) {
     u8g2.setCursor(x , y);
     u8g2.print(text);
     u8g2.sendBuffer();
-    delay(100);
-    u8g2.clearBuffer();
 }
 //屏幕初始化任务
 void initScreen() {
