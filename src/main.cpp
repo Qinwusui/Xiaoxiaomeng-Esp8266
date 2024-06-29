@@ -1,7 +1,5 @@
 #include <main.hpp>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+//定义显示屏驱动
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
@@ -86,6 +84,7 @@ Task tInitTimeClient(TASK_IMMEDIATE , TASK_ONCE , &timeClientInit , &sc);
 Task tUpdateTime(TASK_SECOND , TASK_FOREVER , &timeUpdate , &sc);
 // 创建一个web Server任务
 Task tCreateWebServer(TASK_IMMEDIATE , TASK_ONCE , &createWebServer , &sc);
+Task tInitScreen(TASK_SECOND , TASK_ONCE , &initScreen , &sc);
 WiFiConnectWork* wiFiConnectWork = NULL;
 TimeClientWork* timeClientWork = NULL;
 WebServerWork* webServerWork = NULL;
@@ -96,16 +95,6 @@ void setup() {
     Serial.println();
     Serial.flush();
     // 初始化任务
-    // 初始化显示屏
-    if (!display.begin(SSD1306_SWITCHCAPVCC , 0x3C)) {
-        Serial.println("SSD1306 allocation failed");
-        for (;;); // Loop forever if initialization failed
-    }
-    display.clearDisplay();
-    display.display();
-    // 显示图像
-    display.drawBitmap(0 , 0 , image_data_Saraarray , SCREEN_WIDTH , SCREEN_HEIGHT , WHITE);
-    display.display();
 
     //启动变量初始化
     initAll();
@@ -117,7 +106,24 @@ void setup() {
     tUpdateTime.enable();
     //启动创建webserver任务
     tCreateWebServer.enable();
+    //启动屏幕初始化任务
+    tInitScreen.enable();
 }
+
+//屏幕初始化任务
+void initScreen() {
+    // 初始化显示屏
+    if (!display.begin(SSD1306_SWITCHCAPVCC , 0x3C)) {
+        Serial.println("SSD1306 allocation failed");
+        logger.Println("initScreen" , "初始化屏幕驱动失败");
+        return;
+    }
+    display.clearDisplay();
+    // 显示图像
+    display.drawBitmap(0 , 0 , genshin_logo , SCREEN_WIDTH , SCREEN_HEIGHT , WHITE);
+    display.display();
+}
+
 // 时间更新任务
 void timeUpdate() {
     if (timeClientWork) {
@@ -178,14 +184,14 @@ void createWebServer() {
 void connectWiFiTask() {
     logger.Println("Main" , "执行连接WiFi任务");
     wiFiConnectWork->initWork(
-      { .finished = [] (std::string name) {
-            logger.Println(name , "任务结束");
-            Serial.print("IP地址: ");
-            Serial.println(WiFi.localIP());
-            tConnect.getInternalStatusRequest()->signalComplete();
-            tConnect.disable();
-       } 
-      });
+        { .finished = [] (std::string name) {
+              logger.Println(name , "任务结束");
+              Serial.print("IP地址: ");
+              Serial.println(WiFi.localIP());
+              tConnect.getInternalStatusRequest()->signalComplete();
+              tConnect.disable();
+         }
+        });
 }
 
 // 循环函数
