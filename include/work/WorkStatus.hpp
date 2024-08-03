@@ -15,10 +15,3 @@ struct WorkStatus {
     OnWorkFinished finished = [] (std::string name) {};
     OnWorkError error = [] (std::string name , std::string reason) {};
 };
-// class WorkStatus {
-// public:
-// OnWorkInit init;
-// OnWorkRunning running;
-// OnWorkFinished finished;
-// OnWorkError error;
-// };

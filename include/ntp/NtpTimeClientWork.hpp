@@ -27,7 +27,6 @@ public:
     inline T onLoop() {
         this->client->update();
         T time = this->client->getFormattedTime().c_str();
-        Println(getWorkName() , this->client->getFormattedTime().c_str());
         return  time;
     }
 };

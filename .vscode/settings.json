@@ -53,6 +53,12 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "istream": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "bitset": "cpp",
+        "condition_variable": "cpp",
+        "mutex": "cpp",
+        "sstream": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
     }
 }
