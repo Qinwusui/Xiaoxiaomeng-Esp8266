@@ -12,7 +12,6 @@ public:
 };
 class WiFiStatusListenerWork :public Work , public Logger {
 private:
-    WiFiStatus* status;
 public:
     inline string getWorkName() {
         return "WiFiStatusListenerWork";
@@ -22,10 +21,10 @@ public:
     }
     template <typename T>
     inline T onLoop() {
-        status = new  WiFiStatus();
-        status->connected = WiFi.status() == WL_CONNECTED;
-        status->ssid = WiFi.SSID().c_str();
-        status->length = WiFi.RSSI();
+        WiFiStatus status = WiFiStatus();
+        status.connected = WiFi.status() == WL_CONNECTED;
+        status.ssid = WiFi.SSID().c_str();
+        status.length = WiFi.RSSI();
         return status;
     }
 };

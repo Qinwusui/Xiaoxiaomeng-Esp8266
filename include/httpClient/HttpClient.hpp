@@ -5,7 +5,6 @@
 typedef std::function<void(JsonDocument&)> Success;
 typedef std::function<void(String)> Failure;
 typedef std::function<void()> Requesting;
-
 struct HttpRequestStatus {
     Requesting requesting = [] () {};
 
@@ -15,30 +14,30 @@ struct HttpRequestStatus {
 
 class HttpClient {
 private:
-    WiFiClientSecure client;
+    WiFiClientSecure https;
+    WiFiClient client;
     HTTPClient http;
 public:
     HttpClient() {
-        client.setInsecure();
+        https.setInsecure();
     }
     inline void get(String url , HttpRequestStatus status);
 };
 //GET
 inline void HttpClient::get(String url , HttpRequestStatus status) {
     status.requesting();
-    http.addHeader("Device-Type" , "Esp8266-" + ESP.getChipId());
-    if (http.begin(client , url)) {
+    if (http.begin(client , https , url)) {
+        http.setUserAgent("wusui-" + String(ESP.getChipId()));
         int code = http.GET();
-        if (code != 200) {
-            status.failure("状态码" + code);
+        if (code == 200) {
+            String s = http.getString();
+            JsonDocument d;
+            deserializeJson(d , s);
+            status.success(d);
             return;
         }
-        String body = http.getString();
-        Serial.println(body);
-        JsonDocument document;
-        deserializeJson(document , body);
-        status.success(document);
-        http.end();
+        status.failure("响应：" + String(code));
     }
+    status.failure("响应超时");
 
 }

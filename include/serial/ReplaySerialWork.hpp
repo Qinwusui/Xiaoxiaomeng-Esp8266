@@ -25,14 +25,13 @@ public:
     inline void sendString(String s) {
         serial->print(s);
         serial->flush();
+        serial->flush();
+        serial->flush();
     }
     template <typename T>
     inline T onLoop() {
         if (serial->available() > 0) {
-            String s = serial->readStringUntil('\n');
-            s.trim();
-            return s;
-
+            return serial->readStringUntil('\n');
         }
         return "";
     }

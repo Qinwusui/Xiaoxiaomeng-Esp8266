@@ -10,9 +10,15 @@ Task tInitTimeClient(TASK_IMMEDIATE , TASK_ONCE , &timeClientInit , &sc);
 // 创建一个时间更新任务
 Task tUpdateTime(TASK_SECOND , TASK_FOREVER , &timeUpdate , &sc);
 //创建一个串口通信任务
-Task tSerialCommunication(TASK_SECOND , TASK_FOREVER , &serialLoop , &sc);
+Task tSerialCommunication(80 , TASK_FOREVER , &serialLoop , &sc);
 // 创建一个web Server任务
 // Task tCreateWebServer(TASK_IMMEDIATE , TASK_ONCE , &createWebServer , &sc);
+//创建一个web Socket启动任务
+Task tCreateWsClient(&createWsClientTask , &sc);
+//创建一个webSocket轮询任务
+Task tWsClientLoop(TASK_SECOND , TASK_FOREVER , &wsLoopTask , &sc);
+//创建一个wsLoop任务
+Task tWsLoop(80 , TASK_FOREVER , &wsLoop , &sc);
 //初始化对象
 WiFiConnectWork* wiFiConnectWork = NULL;
 TimeClientWork* timeClientWork = NULL;
@@ -23,7 +29,10 @@ WiFiStatusListenerWork* wifiStatusListenerWork = NULL;
 ReplaySerialWork* replaySerialWork = NULL;
 //HTTP请求客户端
 HttpClient* httpClient = NULL;
+//WebSocket客户端
+WebSocketClient* wsClient = NULL;
 //定义参考https://blog.csdn.net/dpjcn1990/article/details/92831760
+//TODO 需要改成其他端口
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C  u8g2(U8G2_R0 , U8X8_PIN_NONE , 14 , 13);
 
 // 初始化函数
@@ -46,13 +55,65 @@ void setup() {
     //启动创建webserver任务
     // tCreateWebServer.enable();
     //启动WiFi监听任务
-    // tWiFiListener.waitFor(tConnect.getInternalStatusRequest() , TASK_SECOND , TASK_FOREVER);
+    tWiFiListener.waitFor(tConnect.getInternalStatusRequest() , TASK_SECOND , TASK_FOREVER);
+    //webSocket需要在连接网络后尝试建立
+    tCreateWsClient.waitFor(tConnect.getInternalStatusRequest() , TASK_SECOND , TASK_ONCE);
+    //webSocket轮询任务需要在建立ws连接后尝试启动
+    tWsClientLoop.waitFor(tCreateWsClient.getInternalStatusRequest() , TASK_SECOND , TASK_FOREVER);
+
+    tWsLoop.waitFor(tCreateWsClient.getInternalStatusRequest() , 100 , TASK_FOREVER);
+
+}
+//ws连接任务
+void createWsClientTask() {
+    if (wsClient) {
+        wsClient->onWebSocketEvent(
+            [] (string p) {
+                logger.Println(wsClient->getWorkName() , "收到webSocket消息:" + p);
+                commandHandler(p.c_str());
+            }
+        );
+        wsClient->initWork(
+            {
+                .init = [] (string name) {
+                        logger.Println(name,"正在建立Ws连接");
+                },
+                 .finished = [] (string name) {
+                    logger.Println(name,"发起连接成功");
+                },
+                .error = [] (string name ,string reason) {
+                        logger.Println(name,reason);
+                },
+
+            }
+        );
+
+    }
+    tCreateWsClient.getInternalStatusRequest()->signalComplete();
+
+}
+void wsLoop() {
+    if (wsClient) {
+        wsClient->loop();
+    }
+
+}
+//WS客户端轮询任务
+void wsLoopTask() {
+    bool isConnected = wsClient->onLoop<bool>();
+    if (!isConnected) {
+        logger.Println("wsLoopTask" , "WebSocket已断开连接");
+    }
+
+
+
 }
 //WiFi监听任务
 void wifiStatusListener() {
     if (wifiStatusListenerWork) {
-        WiFiStatus* status = wifiStatusListenerWork->onLoop<WiFiStatus*>();
-        String s = String(status->length);
+        WiFiStatus status = wifiStatusListenerWork->onLoop<WiFiStatus>();
+        String s = String(status.length);
+
     }
 
 }
@@ -86,82 +147,20 @@ void serialLoop() {
         if (s == "") {
             return;
         }
-        serialCommandHandler(s);
+        logger.Println("serialLoop" , string("发送消息").append(s.c_str()));
+
+        if (wsClient) {
+            wsClient->sendText(s);
+        }
+        // commandHandler(s);
     }
 
 }
-//串口命令处理
-void serialCommandHandler(String command) {
-    if (command == "openLight") {
-        httpClient->get("https://www.baidu.com" ,
-            {
-                .requesting = [] () {
-                    logger.Println("HTTP","正在请求");
-                },
-                .success = [] (JsonDocument& document) {
-                    replaySerialWork->sendString("light_Opened");
-                    logger.Println("HTTP","请求成功");
-                },
-                .failure = [] (String reason) {
-                    replaySerialWork->sendString("light_Open_failure");
-
-                    logger.Println("HTTP",reason.c_str());
-                }
-            }
-        );
-    }
-    if (command == "closeLight") {
-        httpClient->get("https://www.baidu.com" ,
-            {
-                .requesting = [] () {
-                    logger.Println("HTTP","正在请求");
-                },
-                .success = [] (JsonDocument& document) {
-                    replaySerialWork->sendString("light_Closed");
-                    logger.Println("HTTP","请求成功");
-                },
-                .failure = [] (String reason) {
-                    replaySerialWork->sendString("light_Close_failure");
-
-                    logger.Println("HTTP",reason.c_str());
-                }
-            }
-        );
-    }
-    if (command == "openConditioner") {
-        httpClient->get("https://www.baidu.com" ,
-            {
-                .requesting = [] () {
-                    logger.Println("HTTP","正在请求");
-                },
-                .success = [] (JsonDocument& document) {
-                    replaySerialWork->sendString("conditioner_Opened");
-                    logger.Println("HTTP","请求成功");
-                },
-                .failure = [] (String reason) {
-                    replaySerialWork->sendString("conditioner_Open_failure");
-                    logger.Println("HTTP",reason.c_str());
-                }
-            }
-        );
-    }
-    if (command == "closeConditioner") {
-        httpClient->get("https://www.baidu.com" ,
-            {
-                .requesting = [] () {
-                    logger.Println("HTTP","正在请求");
-                },
-                .success = [] (JsonDocument& document) {
-                    replaySerialWork->sendString("conditioner_Closed");
-                    logger.Println("HTTP","请求成功");
-                },
-                .failure = [] (String reason) {
-                    replaySerialWork->sendString("conditioner_Close_failure");
-
-                    logger.Println("HTTP",reason.c_str());
-                }
-            }
-        );
+//命令处理
+void commandHandler(String command) {
+    if (replaySerialWork) {
+        replaySerialWork->sendString(command);
+        logger.Println("HTTP" , string("收到响应：").append(command.c_str()));
     }
 }
 // 时间初始化任务
@@ -182,7 +181,7 @@ void initAll() {
 
     logger.Println("Main" , "开始初始化所有全局变量");
     httpClient = new HttpClient();
-
+    wsClient = new WebSocketClient("192.168.123.12" , 3456 , "/ws" , "Qinsansui233...");
     fileSystemInitWork = new FileSystemInitWork();
     wiFiConnectWork = new WiFiConnectWork("wusui_2.4G" , "Qinsansui233...");
     timeClientWork = new TimeClientWork();

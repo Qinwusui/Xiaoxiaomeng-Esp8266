@@ -25,6 +25,9 @@
 #include <serial/ReplaySerialWork.hpp>
 //导入HTTP请求客户端
 #include <httpClient/HttpClient.hpp>
+//导入WebSocket客户端
+#include <websocketClient/WebSocketClient.hpp>
+
 //导入SSD1306显示库
 // #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -35,6 +38,12 @@
 
 //创建一个WebServer任务
 // void createWebServer();
+//创建一个WebSocket客户端启动任务
+void createWsClientTask();
+//创建一个WebSocket客户端轮询任务
+void wsLoopTask();
+//创建一个wsLoop任务
+void wsLoop();
 //创建一个连接WiFi任务
 void connectWiFiTask();
 //创建一个初始化全局变量的任务
@@ -54,5 +63,5 @@ void screenLoop();
 void showText(uint8_t x , uint8_t y , const char* text);
 //创建一个WiFi监听任务
 void wifiStatusListener();
-//串口命令处理
-void serialCommandHandler(String command);
+//命令处理
+void commandHandler(String command);
