@@ -181,7 +181,7 @@ void initAll() {
 
     logger.Println("Main" , "开始初始化所有全局变量");
     httpClient = new HttpClient();
-    wsClient = new WebSocketClient("192.168.123.12" , 3456 , "/ws" , "Qinsansui233...");
+    wsClient = new WebSocketClient("192.168.123.8" , 3456 , "/ws" , "Qinsansui233...");
     fileSystemInitWork = new FileSystemInitWork();
     wiFiConnectWork = new WiFiConnectWork("wusui_2.4G" , "Qinsansui233...");
     timeClientWork = new TimeClientWork();

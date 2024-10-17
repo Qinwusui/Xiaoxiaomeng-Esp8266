@@ -12,6 +12,7 @@ private:
     WebSocketsClient client;
     int port;
     String host , path , auth;
+    onWsEvent event = NULL;
 public:
     WebSocketClient(String host , int port , String path , String auth);
     inline string getWorkName();
@@ -20,6 +21,7 @@ public:
     inline T onLoop();
     inline void loop();
     void onWebSocketEvent(onWsEvent event) {
+        this->event = event;
         client.onEvent(
             [=] (WStype_t type , uint8_t* payload , size_t length) {
                 if (type == WStype_TEXT) {
@@ -39,7 +41,15 @@ public:
     }
     void sendText(String message , bool isNoReply = false) {
         String s = isNoReply?message:("isNoReply:" + message);
-        client.sendTXT(s);
+        if (client.isConnected()) {
+            client.sendTXT(s);
+        } else {
+            if (this->event) {
+                event("ws_Closed");
+            }
+            Println(getWorkName() , "WebSocket已断开");
+        }
+
 
     }
 };
