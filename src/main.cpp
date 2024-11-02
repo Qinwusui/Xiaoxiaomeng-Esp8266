@@ -160,7 +160,7 @@ void serialLoop() {
 void commandHandler(String command) {
     if (replaySerialWork) {
         replaySerialWork->sendString(command);
-        logger.Println("HTTP" , string("收到响应：").append(command.c_str()));
+        logger.Println(replaySerialWork->getWorkName() , string("向串口发送消息：").append(command.c_str()));
     }
 }
 // 时间初始化任务
@@ -181,7 +181,7 @@ void initAll() {
 
     logger.Println("Main" , "开始初始化所有全局变量");
     httpClient = new HttpClient();
-    wsClient = new WebSocketClient("192.168.123.8" , 3456 , "/ws" , "Qinsansui233...");
+    wsClient = new WebSocketClient("xiaoxiaomeng.liusui.xyz" , 8080 , "/ws" , "Qinsansui233...");
     fileSystemInitWork = new FileSystemInitWork();
     wiFiConnectWork = new WiFiConnectWork("wusui_2.4G" , "Qinsansui233...");
     timeClientWork = new TimeClientWork();
